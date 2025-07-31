@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap');
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+
+@layer utilities {
+    .bgOne {
+        @apply bg-[#303150]
+    }
+
+    .bgTwo {
+        @apply bg-[#2B2B45]
+    }
+}
+
+.roboto {
+    font-family: "Roboto Condensed", sans-serif;
+}
+
+.poppins {
+    font-family: "Poppins", sans-serif;
+}
+
+/* Chrome, Safari, Edge */
+.hide-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.hide-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* hide track */
+}
+
+.hide-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.5); /* visible thumb */
+  border-radius: 4px;
+}
+
+/* Firefox */
+.hide-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 100, 100, 0.5) transparent;
+}
