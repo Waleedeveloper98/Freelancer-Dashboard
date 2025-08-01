@@ -1,3 +1,4 @@
+// src/context/AuthContextProvider.jsx
 import React, { createContext, useEffect, useState } from "react";
 import {
   onAuthStateChanged,
@@ -6,13 +7,14 @@ import {
   signOut,
 } from "firebase/auth";
 import { auth, db } from "../firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export const authContext = createContext();
 
 const AuthContextProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -23,40 +25,42 @@ const AuthContextProvider = ({ children }) => {
       if (currentUser) {
         const docRef = doc(db, "users", currentUser.uid);
         const docSnap = await getDoc(docRef);
-      }
-      if (docSnap.exists()) {
-        const userData = docSnap.data();
-        console.log("🔥 User data loaded:", userData);
+
+        if (docSnap.exists()) {
+          setUserData(docSnap.data());
+        } else {
+          console.warn("No user data found.");
+        }
       } else {
-        console.log("❌ No user data found");
+        setUserData(null);
       }
     });
+
     return () => unsub();
   }, []);
 
-  // Sign up function
   const signup = async (email, password) => {
-    const userCredntial = createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredntial.user;
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
+    // Save user dashboard data on signup
     await setDoc(doc(db, "users", user.uid), {
       email: user.email,
-      createdAt: new Date().toISOString(),
       dashboardData: {
         projects: [],
-        totalSpent: 0,
+        totalAmount: 0,
         status: "active",
+        createdAt: new Date().toISOString(),
       },
     });
-    return userCredntial;
+
+    return userCredential;
   };
 
-  // Login function
   const login = (email, password) => {
     return signInWithEmailAndPassword(auth, email, password);
   };
 
-  // Logout function
   const logout = () => {
     return signOut(auth);
   };
@@ -69,6 +73,7 @@ const AuthContextProvider = ({ children }) => {
     <authContext.Provider
       value={{
         user,
+        userData,
         login,
         signup,
         logout,
