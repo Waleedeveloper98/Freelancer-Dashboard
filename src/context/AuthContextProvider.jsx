@@ -1,4 +1,3 @@
-// src/context/AuthContextProvider.jsx
 import React, { createContext, useEffect, useState } from "react";
 import {
   onAuthStateChanged,
@@ -20,20 +19,27 @@ const AuthContextProvider = ({ children }) => {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      setLoading(false);
 
       if (currentUser) {
-        const docRef = doc(db, "users", currentUser.uid);
-        const docSnap = await getDoc(docRef);
+        try {
+          const docRef = doc(db, "users", currentUser.uid);
+          const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-          setUserData(docSnap.data());
-        } else {
-          console.warn("No user data found.");
+          if (docSnap.exists()) {
+            setUserData(docSnap.data());
+          } else {
+            console.warn("No user data found.");
+            setUserData(null);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          setUserData(null);
         }
       } else {
         setUserData(null);
       }
+
+      setLoading(false); // ✅ moved to the end after all data is fetched
     });
 
     return () => unsub();
@@ -43,8 +49,7 @@ const AuthContextProvider = ({ children }) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Save user dashboard data on signup
-    await setDoc(doc(db, "users", user.uid), {
+    const dashboardData = {
       email: user.email,
       dashboardData: {
         projects: [],
@@ -52,13 +57,28 @@ const AuthContextProvider = ({ children }) => {
         status: "active",
         createdAt: new Date().toISOString(),
       },
-    });
+    };
+
+    await setDoc(doc(db, "users", user.uid), dashboardData);
+    setUserData(dashboardData); // ✅ update userData immediately
 
     return userCredential;
   };
 
-  const login = (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  const login = async (email, password) => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    const docRef = doc(db, "users", user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      setUserData(docSnap.data()); // ✅ update userData on login
+    } else {
+      setUserData(null);
+    }
+
+    return userCredential;
   };
 
   const logout = () => {
